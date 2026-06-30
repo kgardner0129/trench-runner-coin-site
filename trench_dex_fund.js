@@ -20,7 +20,27 @@
     const phantom = window.phantom && window.phantom.solana;
     if (phantom && phantom.isPhantom) return phantom;
     if (window.solana && window.solana.isPhantom) return window.solana;
+    if (window.solana && typeof window.solana.connect === 'function') return window.solana;
+    if (Array.isArray(window.solanaProviders)) {
+      const compatible = window.solanaProviders.find((walletProvider) =>
+        walletProvider && typeof walletProvider.connect === 'function' && typeof walletProvider.signAndSendTransaction === 'function'
+      );
+      if (compatible) return compatible;
+    }
     return null;
+  }
+
+  function isMobile() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+  }
+
+  function openWalletBrowser() {
+    const current = window.location.href;
+    const ref = window.location.origin || 'https://phantom.app';
+    const url = isMobile()
+      ? `https://phantom.app/ul/browse/${encodeURIComponent(current)}?ref=${encodeURIComponent(ref)}`
+      : 'https://phantom.app/download';
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   function show(message) {
@@ -84,7 +104,12 @@
     }
 
     const p = provider();
-    if (!p) throw new Error('Phantom wallet was not found. Install Phantom, then refresh this page.');
+    if (!p) {
+      openWalletBrowser();
+      throw new Error(isMobile()
+        ? 'Open this page inside Phantom or another Solana wallet browser, then try again.'
+        : 'Solana wallet was not found. Install Phantom, refresh this page, then try again.');
+    }
 
     const connected = wallet || (p.publicKey && p.publicKey.toString());
     if (!connected) {

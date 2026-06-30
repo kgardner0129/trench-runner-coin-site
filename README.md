@@ -28,11 +28,11 @@ Do not upload the admin/dev controller to the public website.
 
 ## Holder Gate
 
-`trench_wallet_gate.js` checks Phantom wallets against the mint in `coin_config.js`.
+`trench_wallet_gate.js` checks Solana browser wallets against the mint in `coin_config.js`.
 
 If `mint` is blank, the game stays open for demo/testing.
 
-After `mint` is set, players must connect Phantom and hold at least `minHoldTokens` tokens to unlock play.
+After `mint` is set, demo play can stay open while holder mode verifies wallets that hold at least `minHoldTokens` tokens. Set `requireHolderToPlay: true` in `coin_config.js` only when you are ready to hard-lock play behind holder verification.
 
 ## Settlement API
 
@@ -45,3 +45,5 @@ settlementApiBase: "https://your-backend-url"
 ```
 
 Leave it blank until the backend is deployed and tested. Holder verification still works without it.
+
+When `settlementApiBase` and `dexFundWallet` are both set, live entry can request the SOL DEX-fund contribution and the backend confirms the payment on-chain.

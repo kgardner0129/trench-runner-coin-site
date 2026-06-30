@@ -24,6 +24,25 @@
     return String(tokenomics().symbol || 'TOKEN').trim();
   }
 
+  function purchaseUrl() {
+    return String(tokenomics().purchaseUrl || 'https://pump.fun').trim();
+  }
+
+  function isMobile() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+  }
+
+  function phantomBrowseUrl() {
+    const current = window.location.href;
+    const ref = window.location.origin || 'https://phantom.app';
+    return `https://phantom.app/ul/browse/${encodeURIComponent(current)}?ref=${encodeURIComponent(ref)}`;
+  }
+
+  function openWalletBrowser() {
+    const url = isMobile() ? phantomBrowseUrl() : 'https://phantom.app/download';
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
   function requiredBalance() {
     const value = Number(tokenomics().minHoldTokens || tokenomics().entryCost || 100);
     return Number.isFinite(value) && value > 0 ? value : 100;
@@ -62,16 +81,25 @@
     const phantom = window.phantom && window.phantom.solana;
     if (phantom && phantom.isPhantom) return phantom;
     if (window.solana && window.solana.isPhantom) return window.solana;
+    if (window.solana && typeof window.solana.connect === 'function') return window.solana;
+    if (Array.isArray(window.solanaProviders)) {
+      const compatible = window.solanaProviders.find((walletProvider) =>
+        walletProvider && typeof walletProvider.connect === 'function' && walletProvider.publicKey !== undefined
+      );
+      if (compatible) return compatible;
+    }
     return null;
   }
 
   async function connectWallet() {
     const p = provider();
     if (!p) {
-      window.open('https://phantom.app/download', '_blank', 'noopener,noreferrer');
-      throw new Error('Phantom wallet was not found. Install Phantom, then refresh this page.');
+      openWalletBrowser();
+      throw new Error(isMobile()
+        ? 'Open this page inside Phantom or another Solana wallet browser, then tap Connect again.'
+        : 'Solana wallet was not found. Install Phantom, refresh this page, then tap Connect again.');
     }
-    showStatus('Opening Phantom wallet...');
+    showStatus('Opening wallet...');
     const result = await p.connect();
     state.wallet = result.publicKey.toString();
     showStatus(`Connected ${short(state.wallet)}.`);
@@ -131,11 +159,21 @@
       panel.innerHTML = `
         <div class="twg-title">Holder Access</div>
         <div class="twg-status" id="twgStatus"></div>
-        <div class="twg-help">Demo play is open. For verified holder mode, send/import at least 100 tokens from Pump.fun to Phantom or another Solana browser wallet, then connect here.</div>
-        <div class="twg-row">
-          <button id="twgConnect">Connect Wallet</button>
-          <button id="twgCheck">Check Holdings</button>
+        <div class="twg-flow">
+          <span>1 Buy ${symbol()}</span>
+          <span>2 Connect wallet</span>
+          <span>3 Verify and play</span>
         </div>
+        <div class="twg-help">Demo play is open. Holder mode checks for ${requiredBalance().toLocaleString()} ${symbol()}. On phones, open this page inside Phantom or another Solana wallet browser before connecting.</div>
+        <div class="twg-row">
+          <a id="twgBuy" href="${purchaseUrl()}" target="_blank" rel="noopener noreferrer">Buy Coin</a>
+          <button id="twgOpenWallet">Open Wallet</button>
+        </div>
+        <div class="twg-row">
+          <button id="twgConnect">Connect + Verify</button>
+          <button id="twgCheck">Recheck</button>
+        </div>
+        <div class="twg-dex" id="twgDexStatus"></div>
       `;
       document.body.appendChild(panel);
 
@@ -170,12 +208,32 @@
           font-size: 11px;
           line-height: 1.35;
         }
+        #trenchWalletGate .twg-flow {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 5px;
+          margin-top: 8px;
+          font-size: 10px;
+          color: #d8f7ef;
+        }
+        #trenchWalletGate .twg-flow span {
+          min-height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          border: 1px solid rgba(255,255,255,.12);
+          border-radius: 7px;
+          padding: 4px;
+          background: rgba(255,255,255,.04);
+        }
         #trenchWalletGate .twg-row {
           display: flex;
           gap: 8px;
           margin-top: 10px;
         }
-        #trenchWalletGate button {
+        #trenchWalletGate button,
+        #trenchWalletGate a {
           flex: 1;
           min-height: 36px;
           border: 0;
@@ -183,9 +241,21 @@
           padding: 8px 10px;
           font-weight: 900;
           cursor: pointer;
+          text-align: center;
+          text-decoration: none;
+          box-sizing: border-box;
         }
-        #twgConnect { background: #38d982; color: #04140b; }
-        #twgCheck { background: #263942; color: #f3f8f7; border: 1px solid rgba(255,255,255,.14); }
+        #twgConnect,
+        #twgBuy { background: #38d982; color: #04140b; }
+        #twgCheck,
+        #twgOpenWallet { background: #263942; color: #f3f8f7; border: 1px solid rgba(255,255,255,.14); }
+        #trenchWalletGate .twg-dex {
+          margin-top: 9px;
+          padding-top: 7px;
+          border-top: 1px dashed rgba(255,255,255,.14);
+          color: #ffd447;
+          font-size: 11px;
+        }
         #trenchWalletGate.verified { border-color: rgba(255,212,71,.75); }
         #trenchWalletGate.verified .twg-status { color: #d9ffe8; }
         @media (pointer: coarse), (max-width: 820px) {
@@ -199,13 +269,17 @@
           }
           #trenchWalletGate .twg-title { margin-bottom: 4px; }
           #trenchWalletGate .twg-status { min-height: 0; font-size: 12px; }
-          #trenchWalletGate .twg-help { display: none; }
+          #trenchWalletGate .twg-help,
+          #trenchWalletGate .twg-flow { display: none; }
           #trenchWalletGate .twg-row { margin-top: 7px; }
-          #trenchWalletGate button { min-height: 34px; padding: 7px 8px; }
+          #trenchWalletGate button,
+          #trenchWalletGate a { min-height: 34px; padding: 7px 8px; }
+          #trenchWalletGate .twg-dex { margin-top: 7px; padding-top: 6px; }
         }
       `;
       document.head.appendChild(style);
 
+      document.getElementById('twgOpenWallet').addEventListener('click', openWalletBrowser);
       document.getElementById('twgConnect').addEventListener('click', async () => {
         try {
           await connectWallet();
@@ -217,6 +291,7 @@
       document.getElementById('twgCheck').addEventListener('click', verifyHolder);
     }
     updatePanel();
+    refreshDexStatus();
   }
 
   function showStatus(message) {
@@ -227,6 +302,9 @@
   function updatePanel() {
     const panel = document.getElementById('trenchWalletGate');
     if (panel) panel.classList.toggle('verified', state.verified);
+
+    const buy = document.getElementById('twgBuy');
+    if (buy) buy.href = purchaseUrl();
 
     const mint = mintAddress();
     if (!mint) {
@@ -251,6 +329,30 @@
       showStatus(`Connect Phantom or another Solana browser wallet for holder mode. Demo play stays open.`);
     }
     setPlayEnabled(!holderRequiredToPlay());
+  }
+
+  async function refreshDexStatus() {
+    const dex = document.getElementById('twgDexStatus');
+    if (!dex) return;
+
+    if (!window.TrenchDexFund || !window.TrenchDexFund.isRequired()) {
+      dex.textContent = 'DEX fund payment turns on after the secure backend URL is added.';
+      return;
+    }
+
+    dex.textContent = 'Checking DEX fund status...';
+    try {
+      const status = await window.TrenchDexFund.status();
+      if (status.dexGoalReached) {
+        dex.textContent = 'DEX fund is complete. Extra SOL contribution is no longer required.';
+      } else if (status.ready && status.solAmount) {
+        dex.textContent = `Live entry includes about ${status.solAmount.toFixed(6)} SOL for the DEX fund until the goal is met.`;
+      } else {
+        dex.textContent = 'DEX fund is configured but not ready yet.';
+      }
+    } catch (error) {
+      dex.textContent = `DEX fund status unavailable: ${error.message}`;
+    }
   }
 
   async function verifyHolder() {
