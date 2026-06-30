@@ -12,6 +12,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://vaultversecoins.com/trench-runner-hero.png">
   <meta name="theme-color" content="#071216">
+  <script src="./coin_config.js"></script>
   <style>
     :root {
       color-scheme: dark;
@@ -101,6 +102,13 @@
       color: #04140b;
       border-color: rgba(56,217,130,.8);
       box-shadow: 0 10px 30px rgba(56,217,130,.22);
+    }
+
+    .btn.buy {
+      background: var(--gold);
+      color: #251800;
+      border-color: rgba(255,212,71,.85);
+      box-shadow: 0 10px 30px rgba(255,212,71,.2);
     }
 
     .hero {
@@ -208,6 +216,36 @@
     .item h3 { margin: 0 0 8px; }
     .item p { margin: 0; color: var(--muted); line-height: 1.45; }
 
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .step {
+      min-height: 160px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.045);
+    }
+
+    .step b {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--gold);
+      color: #251800;
+      font-size: 18px;
+      margin-bottom: 14px;
+    }
+
+    .step h3 { margin: 0 0 8px; font-size: 20px; }
+    .step p { margin: 0; color: var(--muted); line-height: 1.45; }
+
     .promo-video {
       width: 100%;
       display: block;
@@ -230,7 +268,7 @@
     @media (max-width: 860px) {
       .hero { grid-template-columns: 1fr; }
       .coin-stage, .hero-art { min-height: 330px; }
-      .stats, .grid { grid-template-columns: 1fr; }
+      .stats, .grid, .steps { grid-template-columns: 1fr; }
       .topbar { align-items: flex-start; flex-direction: column; }
       .nav { justify-content: flex-start; }
     }
@@ -245,6 +283,7 @@
     <nav class="nav" aria-label="Primary">
       <a href="#tokenomics">Tokenomics</a>
       <a href="#game">Game</a>
+      <a class="js-buy-coin" href="https://pump.fun" target="_blank" rel="noopener noreferrer">Buy Coin</a>
       <a href="./play.html">Play</a>
     </nav>
   </header>
@@ -255,6 +294,7 @@
         <h1>Trench Runner Coin</h1>
         <p class="lead">A Pump.fun arcade coin where holders connect Phantom, run through the trenches, collect coins, dodge ruggers, avoid sniper shots, and compete for the daily reward vault.</p>
         <div class="actions">
+          <a class="btn buy js-buy-coin" href="https://pump.fun" target="_blank" rel="noopener noreferrer">Buy Coin</a>
           <a class="btn primary" href="./play.html">Play Game</a>
           <a class="btn" href="#tokenomics">View Tokenomics</a>
         </div>
@@ -269,6 +309,31 @@
       <div class="stat"><b>10%</b><span>rug/snipe penalties burned</span></div>
       <div class="stat"><b>90%</b><span>rug/snipe penalties to reward vault</span></div>
       <div class="stat"><b>$1</b><span>planned DEX fund contribution per play</span></div>
+    </section>
+
+    <section class="section">
+      <h2>How To Enter</h2>
+      <div class="steps">
+        <div class="step">
+          <b>1</b>
+          <h3>Buy The Coin</h3>
+          <p>Open the Pump.fun coin page and pick up enough tokens to unlock holder access.</p>
+        </div>
+        <div class="step">
+          <b>2</b>
+          <h3>Connect Phantom</h3>
+          <p>Connect your wallet so the game can verify you are holding the launch coin.</p>
+        </div>
+        <div class="step">
+          <b>3</b>
+          <h3>Run The Trenches</h3>
+          <p>Play the game, dodge the chaos, collect coins, and help keep attention moving toward the coin you bought.</p>
+        </div>
+      </div>
+      <div class="actions">
+        <a class="btn buy js-buy-coin" href="https://pump.fun" target="_blank" rel="noopener noreferrer">Buy Coin on Pump.fun</a>
+        <a class="btn primary" href="./play.html">Connect & Play</a>
+      </div>
     </section>
 
     <section class="section" id="game">
@@ -309,5 +374,21 @@
     <span>Trench Runner Coin</span>
     <span>Public player build only. Admin controls are not included on this website.</span>
   </footer>
+  <script>
+    (() => {
+      const config = window.TrenchCoinConfig || {};
+      const url = String(config.purchaseUrl || '').trim();
+      const links = document.querySelectorAll('.js-buy-coin');
+      for (const link of links) {
+        if (url) {
+          link.href = url;
+          link.textContent = link.textContent.includes('Pump.fun') ? 'Buy Coin on Pump.fun' : 'Buy Coin';
+        } else {
+          link.href = 'https://pump.fun';
+          link.title = 'Paste the direct Pump.fun coin URL into coin_config.js after launch.';
+        }
+      }
+    })();
+  </script>
 </body>
 </html>

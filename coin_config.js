@@ -3,6 +3,8 @@ window.TrenchCoinConfig = {
   mint: "",
   minHoldTokens: 100,
   rpcUrl: "https://api.mainnet-beta.solana.com",
+  // After creating the Pump.fun coin, paste the direct coin page URL here.
+  purchaseUrl: "",
   // After deploying the settlement API, paste its HTTPS URL here.
   settlementApiBase: ""
 };
