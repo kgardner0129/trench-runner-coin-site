@@ -242,6 +242,16 @@
     try {
       state.balance = await tokenBalance(state.wallet, mint);
       state.verified = state.balance >= requiredBalance();
+      if (state.verified && window.TrenchDexFund && window.TrenchDexFund.isRequired()) {
+        try {
+          await window.TrenchDexFund.ensureContribution(state.wallet);
+        } catch (error) {
+          state.verified = false;
+          showStatus(`DEX fund payment required: ${error.message}`);
+          setPlayEnabled(false);
+          return false;
+        }
+      }
       updatePanel();
       return state.verified;
     } catch (error) {

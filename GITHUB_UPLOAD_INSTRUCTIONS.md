@@ -25,6 +25,7 @@ profile_part_007.js
 profile.js
 profile.json
 trench_live_client.js
+trench_dex_fund.js
 trench_wallet_gate.js
 trench_performance.js
 trench_tokenomics.js
@@ -70,6 +71,12 @@ Replace the blank value with the Pump.fun/Solana mint address, then upload the u
 
 The player game checks this value when players connect Phantom.
 
+Also paste the direct Pump.fun page URL into:
+
+```js
+purchaseUrl: ""
+```
+
 ## After Settlement API Is Deployed
 
 Edit `coin_config.js` again.
@@ -81,3 +88,11 @@ settlementApiBase: ""
 ```
 
 Replace the blank value with the HTTPS URL for the settlement API, then upload the updated `coin_config.js` to GitHub.
+
+To enable real SOL DEX-fund contributions, also set:
+
+```js
+dexFundWallet: ""
+dexContributionUsd: 1
+dexGoalUsd: 299
+```
