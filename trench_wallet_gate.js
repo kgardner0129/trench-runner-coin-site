@@ -3,6 +3,7 @@
   const state = {
     profile: null,
     wallet: '',
+    walletSource: '',
     balance: 0,
     verified: false,
     checking: false
@@ -40,7 +41,17 @@
 
   function openWalletBrowser() {
     const url = isMobile() ? phantomBrowseUrl() : 'https://phantom.app/download';
-    window.open(url, '_blank', 'noopener,noreferrer');
+    if (isMobile()) {
+      window.location.href = url;
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  function setWallet(address, source = 'wallet') {
+    state.wallet = String(address || '').trim();
+    state.walletSource = source;
+    return state.wallet;
   }
 
   function requiredBalance() {
@@ -94,14 +105,13 @@
   async function connectWallet() {
     const p = provider();
     if (!p) {
-      openWalletBrowser();
       throw new Error(isMobile()
-        ? 'Open this page inside Phantom or another Solana wallet browser, then tap Connect again.'
-        : 'Solana wallet was not found. Install Phantom, refresh this page, then tap Connect again.');
+        ? 'Wallet connect is not available in this browser. Tap Open Wallet, then connect inside the wallet browser.'
+        : 'Wallet connect is not available in this browser. Install/enable the Phantom browser extension, unlock it, refresh, then connect.');
     }
     showStatus('Opening wallet...');
     const result = await p.connect();
-    state.wallet = result.publicKey.toString();
+    setWallet(result.publicKey.toString(), 'connected');
     showStatus(`Connected ${short(state.wallet)}.`);
     return state.wallet;
   }
@@ -173,6 +183,10 @@
           <button id="twgConnect">Connect + Verify</button>
           <button id="twgCheck">Recheck</button>
         </div>
+        <div class="twg-manual">
+          <input id="twgAddress" autocomplete="off" spellcheck="false" placeholder="Paste wallet address to verify holdings">
+          <button id="twgVerifyAddress">Verify Address</button>
+        </div>
         <div class="twg-dex" id="twgDexStatus"></div>
       `;
       document.body.appendChild(panel);
@@ -232,6 +246,21 @@
           gap: 8px;
           margin-top: 10px;
         }
+        #trenchWalletGate .twg-manual {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 7px;
+          margin-top: 8px;
+        }
+        #trenchWalletGate input {
+          min-width: 0;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 7px;
+          padding: 8px;
+          background: rgba(255,255,255,.05);
+          color: #f3f8f7;
+          font: inherit;
+        }
         #trenchWalletGate button,
         #trenchWalletGate a {
           flex: 1;
@@ -248,7 +277,9 @@
         #twgConnect,
         #twgBuy { background: #38d982; color: #04140b; }
         #twgCheck,
-        #twgOpenWallet { background: #263942; color: #f3f8f7; border: 1px solid rgba(255,255,255,.14); }
+        #twgOpenWallet,
+        #twgVerifyAddress { background: #263942; color: #f3f8f7; border: 1px solid rgba(255,255,255,.14); }
+        #twgVerifyAddress { min-width: 112px; }
         #trenchWalletGate .twg-dex {
           margin-top: 9px;
           padding-top: 7px;
@@ -272,6 +303,7 @@
           #trenchWalletGate .twg-help,
           #trenchWalletGate .twg-flow { display: none; }
           #trenchWalletGate .twg-row { margin-top: 7px; }
+          #trenchWalletGate .twg-manual { grid-template-columns: 1fr; gap: 6px; }
           #trenchWalletGate button,
           #trenchWalletGate a { min-height: 34px; padding: 7px 8px; }
           #trenchWalletGate .twg-dex { margin-top: 7px; padding-top: 6px; }
@@ -280,6 +312,7 @@
       document.head.appendChild(style);
 
       document.getElementById('twgOpenWallet').addEventListener('click', openWalletBrowser);
+      document.getElementById('twgVerifyAddress').addEventListener('click', verifyManualAddress);
       document.getElementById('twgConnect').addEventListener('click', async () => {
         try {
           await connectWallet();
@@ -297,6 +330,17 @@
   function showStatus(message) {
     const status = document.getElementById('twgStatus');
     if (status) status.textContent = message;
+  }
+
+  async function verifyManualAddress() {
+    const input = document.getElementById('twgAddress');
+    const address = String(input && input.value || '').trim();
+    if (!address) {
+      showStatus('Paste your Pump.fun or Phantom wallet address first.');
+      return false;
+    }
+    setWallet(address, 'pasted');
+    return verifyHolder({ skipConnect: true });
   }
 
   function updatePanel() {
@@ -318,7 +362,8 @@
     }
 
     if (state.verified) {
-      showStatus(`Verified ${short(state.wallet)} holds ${state.balance.toLocaleString()} ${symbol()}. Holder mode unlocked.`);
+      const mode = state.walletSource === 'pasted' ? 'Address verified' : 'Wallet verified';
+      showStatus(`${mode}: ${short(state.wallet)} holds ${state.balance.toLocaleString()} ${symbol()}. Holder mode unlocked.`);
       setPlayEnabled(true);
       return;
     }
@@ -326,7 +371,7 @@
     if (state.wallet) {
       showStatus(`${short(state.wallet)} holds ${state.balance.toLocaleString()} ${symbol()}. Need ${requiredBalance().toLocaleString()} ${symbol()} for holder mode. Demo play stays open.`);
     } else {
-      showStatus(`Connect Phantom or another Solana browser wallet for holder mode. Demo play stays open.`);
+      showStatus(`Connect a Solana wallet, or paste a wallet address to verify holdings. Demo play stays open.`);
     }
     setPlayEnabled(!holderRequiredToPlay());
   }
@@ -355,22 +400,26 @@
     }
   }
 
-  async function verifyHolder() {
+  async function verifyHolder(options = {}) {
     const mint = mintAddress();
     if (!mint) {
-      if (!state.wallet) await connectWallet();
+      if (!state.wallet && !options.skipConnect) await connectWallet();
       state.verified = false;
       updatePanel();
       return true;
     }
-    if (!state.wallet) await connectWallet();
+    if (!state.wallet && !options.skipConnect) await connectWallet();
+    if (!state.wallet) {
+      showStatus('Connect a wallet or paste a wallet address first.');
+      return false;
+    }
 
     state.checking = true;
     showStatus('Checking token balance on Solana...');
     try {
       state.balance = await tokenBalance(state.wallet, mint);
       state.verified = state.balance >= requiredBalance();
-      if (state.verified && window.TrenchDexFund && window.TrenchDexFund.isRequired()) {
+      if (state.verified && state.walletSource !== 'pasted' && window.TrenchDexFund && window.TrenchDexFund.isRequired()) {
         try {
           await window.TrenchDexFund.ensureContribution(state.wallet);
         } catch (error) {
@@ -381,6 +430,9 @@
         }
       }
       updatePanel();
+      if (state.verified && state.walletSource === 'pasted' && window.TrenchDexFund && window.TrenchDexFund.isRequired()) {
+        showStatus(`Address verified for holdings. Connect inside a Solana wallet browser to approve the SOL DEX contribution.`);
+      }
       return state.verified;
     } catch (error) {
       state.verified = false;
@@ -411,7 +463,7 @@
     interceptPlayClicks();
     const p = provider();
     if (p && p.isConnected && p.publicKey) {
-      state.wallet = p.publicKey.toString();
+      setWallet(p.publicKey.toString(), 'connected');
       verifyHolder();
     }
   }
