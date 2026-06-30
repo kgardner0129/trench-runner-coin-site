@@ -110,6 +110,19 @@
   #demoBadge{background:var(--hilite);}
   #liveBadge{background:var(--accent);}
   #coinCostDisplay{position:fixed;top:60px;right:10px;background:rgba(10,15,18,.78);padding:6px 10px;border:1px solid rgba(255,215,0,.5);border-radius:8px;font-size:12px;z-index:8;display:none}
+  #mobileControls{position:fixed;inset:0;z-index:7;pointer-events:none;display:none}
+  #movePad{position:absolute;left:18px;bottom:22px;width:132px;height:132px;border-radius:50%;background:rgba(8,18,24,.46);border:1px solid rgba(138,255,193,.34);box-shadow:0 12px 36px rgba(0,0,0,.32);pointer-events:auto;touch-action:none}
+  #moveStick{position:absolute;left:50%;top:50%;width:54px;height:54px;border-radius:50%;transform:translate(-50%,-50%);background:rgba(138,255,193,.82);box-shadow:0 0 18px rgba(138,255,193,.4)}
+  #shootBtn{position:absolute;right:22px;bottom:34px;width:92px;height:92px;border-radius:50%;border:1px solid rgba(255,212,71,.7);background:rgba(255,212,71,.86);color:#1e1600;font-weight:950;font-size:14px;letter-spacing:0;box-shadow:0 12px 36px rgba(0,0,0,.32);pointer-events:auto;touch-action:none}
+  #shootBtn:active,#shootBtn.active{transform:scale(.96);background:#ffe37a}
+  #mobileHint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);padding:5px 9px;border-radius:999px;background:rgba(8,18,24,.66);border:1px solid rgba(255,255,255,.12);font-size:11px;color:#d7e6e4;white-space:nowrap}
+  @media (pointer:coarse), (max-width: 820px){
+    #mobileControls{display:block}
+    #hud{top:8px;max-width:calc(100vw - 16px);gap:8px;padding:7px 9px;font-size:12px;flex-wrap:wrap;justify-content:center}
+    #controls{top:58px;right:8px;gap:6px}
+    #controls button{padding:8px 10px;font-size:12px}
+    #trenchPlayerStatus{display:none}
+  }
   #passwordPrompt{position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);background:var(--panel);color:white;padding:20px;border-radius:10px;font-weight:bold;font-size:16px;z-index:30;display:none;border:1px solid var(--neon);text-align:center}
   #passwordInput{background:#0e1820;color:white;border:1px solid rgba(255,255,255,.3);border-radius:5px;padding:8px;margin:10px 0;width:100%}
   #passwordSubmit{background:var(--accent);color:white;border:none;border-radius:5px;padding:8px 16px;cursor:pointer;margin-right:5px}
@@ -471,6 +484,12 @@ run</textarea>
     </div>
   </div>
 
+  <div id="mobileControls" aria-hidden="false">
+    <div id="movePad" aria-label="Move player"><div id="moveStick"></div></div>
+    <button id="shootBtn" type="button" aria-label="Shoot">SHOOT</button>
+    <div id="mobileHint">Touch pad to move. Shoot needs gun + ammo.</div>
+  </div>
+
   <div id="introOverlay" aria-hidden="true">
     <div id="introCard" role="dialog" aria-modal="true" aria-labelledby="introTitle">
       <h2 id="introTitle">V.V.C Trench Runner</h2>
@@ -480,9 +499,10 @@ run</textarea>
           <h3>Controls</h3>
           <ul>
             <li>Move with WASD or arrow keys.</li>
+            <li>On phones, move with the left touch pad.</li>
             <li>Pick up coins by touching them.</li>
             <li>Pick up a gun, then find ammo.</li>
-            <li>Shoot with mouse click, F, or Ctrl. You need both a gun and ammo.</li>
+            <li>Shoot with mouse click, F, Ctrl, or the phone Shoot button. You need both a gun and ammo.</li>
             <li>You have health now. A run ends when health reaches zero.</li>
           </ul>
         </div>
@@ -1434,6 +1454,7 @@ run</textarea>
   if (highEl) highEl.textContent=HIGH;
   
   const keys=new Set();
+  const touchMove = { active:false, x:0, y:0, pointerId:null };
   let running=false, paused=false; let lastTs=performance.now(); let tms=0; let loopHandle=0;
 
   function scheduleLoop(){
@@ -1517,6 +1538,75 @@ run</textarea>
     if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase())) e.preventDefault();
   }, {passive:false});
   addEventListener('keyup', e=>keys.delete(e.key.toLowerCase()));
+
+  const movePad = document.getElementById('movePad');
+  const moveStick = document.getElementById('moveStick');
+  const shootBtn = document.getElementById('shootBtn');
+
+  function setTouchMoveFromEvent(e){
+    if(!movePad) return;
+    const rect = movePad.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const max = rect.width * 0.36;
+    let dx = e.clientX - cx;
+    let dy = e.clientY - cy;
+    const len = Math.hypot(dx, dy);
+    if(len > max){
+      dx = dx / len * max;
+      dy = dy / len * max;
+    }
+    touchMove.active = true;
+    touchMove.x = dx / max;
+    touchMove.y = dy / max;
+    if(moveStick) moveStick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    const p = world.player;
+    if(Math.hypot(touchMove.x, touchMove.y) > 0.18){
+      world.aimX = p.x + touchMove.x * 120;
+      world.aimY = p.y + touchMove.y * 120;
+    }
+  }
+
+  function clearTouchMove(){
+    touchMove.active = false;
+    touchMove.x = 0;
+    touchMove.y = 0;
+    touchMove.pointerId = null;
+    if(moveStick) moveStick.style.transform = 'translate(-50%,-50%)';
+  }
+
+  if(movePad){
+    movePad.addEventListener('pointerdown', e=>{
+      e.preventDefault();
+      touchMove.pointerId = e.pointerId;
+      movePad.setPointerCapture?.(e.pointerId);
+      setTouchMoveFromEvent(e);
+    }, {passive:false});
+    movePad.addEventListener('pointermove', e=>{
+      if(touchMove.pointerId !== e.pointerId) return;
+      e.preventDefault();
+      setTouchMoveFromEvent(e);
+    }, {passive:false});
+    movePad.addEventListener('pointerup', e=>{
+      if(touchMove.pointerId !== e.pointerId) return;
+      e.preventDefault();
+      clearTouchMove();
+    }, {passive:false});
+    movePad.addEventListener('pointercancel', clearTouchMove);
+  }
+
+  if(shootBtn){
+    shootBtn.addEventListener('pointerdown', e=>{
+      e.preventDefault();
+      shootBtn.classList.add('active');
+      firePlayerShot();
+    }, {passive:false});
+    const clearShoot = ()=>shootBtn.classList.remove('active');
+    shootBtn.addEventListener('pointerup', clearShoot);
+    shootBtn.addEventListener('pointercancel', clearShoot);
+    shootBtn.addEventListener('pointerleave', clearShoot);
+  }
+
   cvs.addEventListener('pointermove', e=>{
     world.aimX = e.clientX + camera.x;
     world.aimY = e.clientY + camera.y;
@@ -2357,6 +2447,10 @@ run</textarea>
     if(keys.has('s')||keys.has('arrowdown')) ay+=1; 
     if(keys.has('a')||keys.has('arrowleft')) ax-=1; 
     if(keys.has('d')||keys.has('arrowright')) ax+=1; 
+    if(touchMove.active){
+      ax += touchMove.x;
+      ay += touchMove.y;
+    }
     const m=Math.hypot(ax,ay)||1; 
     ax/=m; 
     ay/=m;

@@ -188,6 +188,21 @@
         #twgCheck { background: #263942; color: #f3f8f7; border: 1px solid rgba(255,255,255,.14); }
         #trenchWalletGate.verified { border-color: rgba(255,212,71,.75); }
         #trenchWalletGate.verified .twg-status { color: #d9ffe8; }
+        @media (pointer: coarse), (max-width: 820px) {
+          #trenchWalletGate {
+            left: 8px;
+            right: 8px;
+            bottom: auto;
+            top: 108px;
+            width: auto;
+            padding: 9px;
+          }
+          #trenchWalletGate .twg-title { margin-bottom: 4px; }
+          #trenchWalletGate .twg-status { min-height: 0; font-size: 12px; }
+          #trenchWalletGate .twg-help { display: none; }
+          #trenchWalletGate .twg-row { margin-top: 7px; }
+          #trenchWalletGate button { min-height: 34px; padding: 7px 8px; }
+        }
       `;
       document.head.appendChild(style);
 
