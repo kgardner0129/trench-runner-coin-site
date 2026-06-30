@@ -67,8 +67,10 @@
       window.open('https://phantom.app/download', '_blank', 'noopener,noreferrer');
       throw new Error('Phantom wallet was not found. Install Phantom, then refresh this page.');
     }
+    showStatus('Opening Phantom wallet...');
     const result = await p.connect();
     state.wallet = result.publicKey.toString();
+    showStatus(`Connected ${short(state.wallet)}.`);
     return state.wallet;
   }
 
@@ -202,7 +204,11 @@
 
     const mint = mintAddress();
     if (!mint) {
-      showStatus('Token mint is not set yet. Demo play is open until the Pump.fun mint is added to profile.json.');
+      if (state.wallet) {
+        showStatus(`Connected ${short(state.wallet)}. Token mint is not set yet, so demo play is open until the Pump.fun mint is added to coin_config.js.`);
+      } else {
+        showStatus('Token mint is not set yet. Demo play is open until the Pump.fun mint is added to coin_config.js.');
+      }
       setPlayEnabled(true);
       return;
     }
@@ -224,7 +230,8 @@
   async function verifyHolder() {
     const mint = mintAddress();
     if (!mint) {
-      state.verified = true;
+      if (!state.wallet) await connectWallet();
+      state.verified = false;
       updatePanel();
       return true;
     }
