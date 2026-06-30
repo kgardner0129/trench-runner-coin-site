@@ -28,6 +28,7 @@ trench_live_client.js
 trench_wallet_gate.js
 trench_performance.js
 trench_tokenomics.js
+GITHUB_UPLOAD_INSTRUCTIONS.md
 README.md
 assets/
 ```
@@ -68,3 +69,15 @@ mint: "",
 Replace the blank value with the Pump.fun/Solana mint address, then upload the updated `coin_config.js` to GitHub.
 
 The player game checks this value when players connect Phantom.
+
+## After Settlement API Is Deployed
+
+Edit `coin_config.js` again.
+
+Find:
+
+```js
+settlementApiBase: ""
+```
+
+Replace the blank value with the HTTPS URL for the settlement API, then upload the updated `coin_config.js` to GitHub.

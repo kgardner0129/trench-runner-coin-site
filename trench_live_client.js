@@ -2,7 +2,8 @@
   const DEFAULT_API = 'http://localhost:8787';
 
   function apiBase() {
-    return String(window.TRENCH_API_BASE || localStorage.getItem('trench_api_base') || DEFAULT_API).replace(/\/+$/, '');
+    const configured = window.TrenchCoinConfig && (window.TrenchCoinConfig.settlementApiBase || window.TrenchCoinConfig.apiBase);
+    return String(window.TRENCH_API_BASE || configured || localStorage.getItem('trench_api_base') || DEFAULT_API).replace(/\/+$/, '');
   }
 
   async function request(path, options = {}) {
@@ -64,4 +65,3 @@
     vault
   };
 })();
-

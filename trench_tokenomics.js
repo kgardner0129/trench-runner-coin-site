@@ -86,6 +86,14 @@
     render();
   }
 
+  function dexContributionFor(s) {
+    const goal = Math.max(0, Number(s.dexGoalUsd) || 0);
+    const current = Math.max(0, Number(s.dexFundUsd) || 0);
+    const configured = Math.max(0, Number(s.dexContributionUsd) || 0);
+    if (!goal || current >= goal) return 0;
+    return Math.min(configured, goal - current);
+  }
+
   function addHistory(row) {
     const rows = load(HISTORY, []);
     rows.unshift(row);
@@ -376,7 +384,9 @@
     $('ttRewardVault').textContent = token(s.rewardVaultBalance, s);
     $('ttBurned').textContent = token(s.burnedTotal, s);
     $('ttEscrow').textContent = run ? `${token(run.entryCost, s)} active` : token(s.escrowBalance, s);
-    $('ttDexFund').textContent = `$${money(s.dexFundUsd)} / $${money(s.dexGoalUsd)}`;
+    const nextDexContribution = dexContributionFor(s);
+    const dexLabel = nextDexContribution > 0 ? `$${money(s.dexFundUsd)} / $${money(s.dexGoalUsd)} (+$${money(nextDexContribution)} next play)` : `$${money(s.dexFundUsd)} / $${money(s.dexGoalUsd)} (goal met)`;
+    $('ttDexFund').textContent = dexLabel;
     $('ttDexBar').style.width = `${Math.max(0, Math.min(100, Number(s.dexFundUsd || 0) / Math.max(1, Number(s.dexGoalUsd || 1)) * 100))}%`;
     $('ttWallet').textContent = s.walletAddress ? `Wallet: ${s.walletAddress}` : 'No wallet connected. Simulation balances are local to this browser.';
   }
@@ -409,14 +419,14 @@
     setState({
       playerBalance: Number(s.playerBalance) - Number(s.entryCost),
       escrowBalance: Number(s.escrowBalance) + Number(s.entryCost),
-      dexFundUsd: Number(s.dexFundUsd) + Number(s.dexContributionUsd)
+      dexFundUsd: Number(s.dexFundUsd) + dexContributionFor(s)
     });
     setRun(run);
     if (manual) {
       const play = $('playBtn');
       if (play) play.click();
     }
-    toast(`Run escrowed: ${token(run.entryCost, s)} + $${money(s.dexContributionUsd)} DEX fund`);
+    toast(`Run escrowed: ${token(run.entryCost, s)} + $${money(dexContributionFor(s))} DEX fund`);
     return true;
   }
 

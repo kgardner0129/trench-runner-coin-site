@@ -33,3 +33,15 @@ Do not upload the admin/dev controller to the public website.
 If `mint` is blank, the game stays open for demo/testing.
 
 After `mint` is set, players must connect Phantom and hold at least `minHoldTokens` tokens to unlock play.
+
+## Settlement API
+
+The game can be connected to the backend later by editing `coin_config.js`.
+
+Set:
+
+```js
+settlementApiBase: "https://your-backend-url"
+```
+
+Leave it blank until the backend is deployed and tested. Holder verification still works without it.
