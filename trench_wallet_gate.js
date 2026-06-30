@@ -29,6 +29,10 @@
     return Number.isFinite(value) && value > 0 ? value : 100;
   }
 
+  function holderRequiredToPlay() {
+    return tokenomics().requireHolderToPlay === true;
+  }
+
   async function loadProfile() {
     if (window.TrenchEmbeddedProfile) {
       state.profile = window.TrenchEmbeddedProfile;
@@ -115,7 +119,7 @@
       button.disabled = !enabled;
       button.style.opacity = enabled ? '' : '.55';
       button.style.cursor = enabled ? '' : 'not-allowed';
-      button.title = enabled ? '' : `Connect a wallet holding at least ${requiredBalance()} ${symbol()} to play.`;
+      button.title = enabled ? '' : `Connect a wallet holding at least ${requiredBalance()} ${symbol()} to unlock holder mode.`;
     }
   }
 
@@ -127,6 +131,7 @@
       panel.innerHTML = `
         <div class="twg-title">Holder Access</div>
         <div class="twg-status" id="twgStatus"></div>
+        <div class="twg-help">Demo play is open. For verified holder mode, send/import at least 100 tokens from Pump.fun to Phantom or another Solana browser wallet, then connect here.</div>
         <div class="twg-row">
           <button id="twgConnect">Connect Wallet</button>
           <button id="twgCheck">Check Holdings</button>
@@ -158,6 +163,12 @@
         #trenchWalletGate .twg-status {
           color: #b7cbc8;
           min-height: 38px;
+        }
+        #trenchWalletGate .twg-help {
+          margin-top: 7px;
+          color: #8fa5a2;
+          font-size: 11px;
+          line-height: 1.35;
         }
         #trenchWalletGate .twg-row {
           display: flex;
@@ -205,26 +216,26 @@
     const mint = mintAddress();
     if (!mint) {
       if (state.wallet) {
-        showStatus(`Connected ${short(state.wallet)}. Token mint is not set yet, so demo play is open until the Pump.fun mint is added to coin_config.js.`);
+        showStatus(`Connected ${short(state.wallet)}. Demo play is open until holder mode is fully configured.`);
       } else {
-        showStatus('Token mint is not set yet. Demo play is open until the Pump.fun mint is added to coin_config.js.');
+        showStatus('Demo play is open. Holder verification turns on after the Pump.fun mint is added.');
       }
       setPlayEnabled(true);
       return;
     }
 
     if (state.verified) {
-      showStatus(`Verified ${short(state.wallet)} holds ${state.balance.toLocaleString()} ${symbol()}. Play unlocked.`);
+      showStatus(`Verified ${short(state.wallet)} holds ${state.balance.toLocaleString()} ${symbol()}. Holder mode unlocked.`);
       setPlayEnabled(true);
       return;
     }
 
     if (state.wallet) {
-      showStatus(`${short(state.wallet)} holds ${state.balance.toLocaleString()} ${symbol()}. Need ${requiredBalance().toLocaleString()} ${symbol()} to play.`);
+      showStatus(`${short(state.wallet)} holds ${state.balance.toLocaleString()} ${symbol()}. Need ${requiredBalance().toLocaleString()} ${symbol()} for holder mode. Demo play stays open.`);
     } else {
-      showStatus(`Connect Phantom. Requires ${requiredBalance().toLocaleString()} ${symbol()} to play.`);
+      showStatus(`Connect Phantom or another Solana browser wallet for holder mode. Demo play stays open.`);
     }
-    setPlayEnabled(false);
+    setPlayEnabled(!holderRequiredToPlay());
   }
 
   async function verifyHolder() {
@@ -267,7 +278,7 @@
   function interceptPlayClicks() {
     document.addEventListener('click', async (event) => {
       const button = event.target && event.target.closest && event.target.closest('#playBtn,#replayBtn,#continueBtn');
-      if (!button || state.verified || !mintAddress()) return;
+      if (!button || state.verified || !mintAddress() || !holderRequiredToPlay()) return;
 
       event.preventDefault();
       event.stopPropagation();
