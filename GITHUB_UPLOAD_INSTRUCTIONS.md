@@ -14,8 +14,18 @@ Required public files:
 .nojekyll
 index.html
 play.html
+coin_config.js
+profile_part_001.js
+profile_part_002.js
+profile_part_003.js
+profile_part_004.js
+profile_part_005.js
+profile_part_006.js
+profile_part_007.js
+profile.js
 profile.json
 trench_live_client.js
+trench_wallet_gate.js
 trench_performance.js
 trench_tokenomics.js
 README.md
@@ -43,5 +53,18 @@ launch/settlement-api/.env
 7. Save.
 8. Wait for GitHub to publish the site URL.
 
-Use the published GitHub Pages URL as the Pump.fun website URL.
+Use the custom domain URL as the Pump.fun website URL.
 
+## After Pump.fun Gives You The Mint
+
+Edit `coin_config.js`.
+
+Find:
+
+```js
+mint: "",
+```
+
+Replace the blank value with the Pump.fun/Solana mint address, then upload the updated `coin_config.js` to GitHub.
+
+The player game checks this value when players connect Phantom.
