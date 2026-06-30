@@ -63,6 +63,20 @@
     return tokenomics().requireHolderToPlay === true;
   }
 
+  function rpcEndpoints() {
+    const configured = tokenomics().rpcFallbackUrls;
+    const urls = Array.isArray(configured) ? configured : [];
+    return [
+      tokenomics().rpcUrl,
+      ...urls,
+      'https://solana-rpc.publicnode.com',
+      DEFAULT_RPC
+    ]
+      .map((url) => String(url || '').trim())
+      .filter(Boolean)
+      .filter((url, index, all) => all.indexOf(url) === index);
+  }
+
   async function loadProfile() {
     if (window.TrenchEmbeddedProfile) {
       state.profile = window.TrenchEmbeddedProfile;
@@ -117,20 +131,32 @@
   }
 
   async function rpc(method, params) {
-    const endpoint = String(tokenomics().rpcUrl || DEFAULT_RPC);
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 'trench-holder-check',
-        method,
-        params
-      })
+    const payload = JSON.stringify({
+      jsonrpc: '2.0',
+      id: 'trench-holder-check',
+      method,
+      params
     });
-    const body = await response.json();
-    if (body.error) throw new Error(body.error.message || 'Solana RPC error');
-    return body.result;
+    let lastError = null;
+
+    for (const endpoint of rpcEndpoints()) {
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: payload
+        });
+        const text = await response.text();
+        const body = text ? JSON.parse(text) : {};
+        if (!response.ok) throw new Error(body.error?.message || body.error || response.statusText || `HTTP ${response.status}`);
+        if (body.error) throw new Error(body.error.message || 'Solana RPC error');
+        return body.result;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw new Error(lastError?.message || 'All Solana RPC checks failed');
   }
 
   async function tokenBalance(owner, mint) {
