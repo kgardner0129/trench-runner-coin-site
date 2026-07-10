@@ -1,49 +1,39 @@
-# Trench Runner Coin Website
+# VaultVerse Coins Arcade
 
-This is the public website folder for the first Trench Runner coin launch.
+This is the public website folder for VaultVerseCoins.com.
 
-Upload this folder to GitHub. The public game entry is `play.html`.
+The site is now a free game hub. Trench Runner is the first playable game, and future games can be added to `index.html` as new game cards.
 
-Do not upload the admin/dev controller to the public website.
+## Public Files
 
-## Files
-
-- `index.html` - coin website homepage
-- `play.html` - protected player game
-- `coin_config.js` - small launch config for the Pump.fun mint and holder minimum
-- `profile_part_001.js` through `profile_part_007.js` - saved game images, videos, and settings split for GitHub upload
+- `index.html` - VaultVerse arcade hub homepage
+- `play.html` - free Trench Runner player game
+- `coin_config.js` - free-play config used by the game wrapper
+- `profile_part_001.js` through `profile_part_007.js` - saved Trench Runner images, videos, and settings
 - `profile.js` - loader that rebuilds the saved game profile
-- `profile.json` - small manifest only
-- `trench_live_client.js` - frontend bridge for the settlement API
-- `trench_wallet_gate.js` - Phantom holder verification gate
-- `assets/` - optional place for coin images, logos, and social preview images
+- `profile.json` - small profile manifest
+- `trench_performance.js` - optional performance helper for the game
+- `trench-runner-hero.png` - homepage and social image
+- `trench-runner-square.png` - icon/social image
+- `trench-runner-launch.mp4` - trailer video
 
-## Before Pump.fun Launch
+## Free Play Direction
 
-1. Replace the placeholder links in `index.html`.
-2. Add your social links.
-3. After Pump.fun creates the coin, paste the mint address into `coin_config.js` at `mint`.
-4. Deploy with GitHub Pages.
-5. Use the custom domain URL as the Pump.fun website URL.
+Wallet connect, holder checks, DEX funding, and token settlement are no longer part of the public game.
 
-## Holder Gate
+Do not upload or link these old token/wallet add-ons unless you intentionally bring that direction back later:
 
-`trench_wallet_gate.js` checks Solana browser wallets against the mint in `coin_config.js`.
+- `trench_wallet_gate.js`
+- `trench_dex_fund.js`
+- `trench_live_client.js`
+- `trench_tokenomics.js`
 
-If `mint` is blank, the game stays open for demo/testing.
+## Adding Future Games
 
-After `mint` is set, demo play can stay open while holder mode verifies wallets that hold at least `minHoldTokens` tokens. Set `requireHolderToPlay: true` in `coin_config.js` only when you are ready to hard-lock play behind holder verification.
+1. Add the new game file to this folder, such as `new-game.html`.
+2. Add the new artwork file to this folder.
+3. Copy one of the game cards in `index.html`.
+4. Change the title, description, tags, image, and play link.
+5. Upload the changed files to GitHub.
 
-## Settlement API
-
-The game can be connected to the backend later by editing `coin_config.js`.
-
-Set:
-
-```js
-settlementApiBase: "https://your-backend-url"
-```
-
-Leave it blank until the backend is deployed and tested. Holder verification still works without it.
-
-When `settlementApiBase` and `dexFundWallet` are both set, live entry can request the SOL DEX-fund contribution and the backend confirms the payment on-chain.
+Do not upload admin/dev controller files to the public website.

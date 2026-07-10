@@ -3,30 +3,29 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Trench Runner Coin</title>
-  <meta name="description" content="Trench Runner is a token-powered arcade game for the trenches. Dodge ruggers, snipers, fuddlers, whales, and honeypots while collecting coin rewards.">
-  <meta property="og:title" content="Trench Runner Coin">
-  <meta property="og:description" content="A token-powered arcade game for the trenches.">
+  <title>VaultVerse Coins Arcade</title>
+  <meta name="description" content="VaultVerse Coins is a free arcade game hub. Play Trench Runner and future VaultVerse games from one place.">
+  <meta property="og:title" content="VaultVerse Coins Arcade">
+  <meta property="og:description" content="A free arcade hub for Trench Runner and upcoming VaultVerse games.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://vaultversecoins.com/trench-runner-square.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://vaultversecoins.com/trench-runner-hero.png">
   <meta name="theme-color" content="#071216">
-  <script src="./coin_config.js"></script>
   <style>
     :root {
       color-scheme: dark;
       --bg: #071216;
       --panel: #0e1b21;
-      --panel2: #12262b;
+      --panel-2: #10252a;
       --text: #f3f8f7;
-      --muted: #9fb3b0;
+      --muted: #a8bbb8;
       --line: rgba(255,255,255,.14);
       --gold: #ffd447;
       --green: #38d982;
-      --red: #ff5f57;
-      --blue: #46a7ff;
-      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --teal: #48d6d2;
+      --red: #ff6b5f;
+      --shadow: 0 18px 50px rgba(0,0,0,.34);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
@@ -34,12 +33,12 @@
     html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      background:
-        radial-gradient(circle at 20% 15%, rgba(56,217,130,.16), transparent 28rem),
-        radial-gradient(circle at 82% 24%, rgba(255,212,71,.12), transparent 24rem),
-        linear-gradient(180deg, #071216 0%, #09191d 48%, #071216 100%);
-      color: var(--text);
       min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 14% 10%, rgba(72,214,210,.18), transparent 26rem),
+        radial-gradient(circle at 86% 18%, rgba(255,212,71,.15), transparent 24rem),
+        linear-gradient(180deg, #071216 0%, #0a1a1f 48%, #071216 100%);
     }
 
     a { color: inherit; text-decoration: none; }
@@ -52,8 +51,8 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding: 14px clamp(16px, 4vw, 48px);
-      background: rgba(7,18,22,.84);
+      padding: 14px clamp(16px, 4vw, 52px);
+      background: rgba(7,18,22,.86);
       border-bottom: 1px solid var(--line);
       backdrop-filter: blur(14px);
     }
@@ -62,29 +61,28 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      font-weight: 900;
+      font-weight: 950;
       letter-spacing: 0;
     }
 
     .mark {
-      width: 34px;
-      height: 34px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
-      display: block;
       object-fit: cover;
-      object-position: center;
       box-shadow: 0 0 22px rgba(255,212,71,.35);
     }
 
     .nav {
       display: flex;
       align-items: center;
+      justify-content: flex-end;
       gap: 8px;
       flex-wrap: wrap;
-      justify-content: flex-end;
     }
 
-    .nav a, .btn {
+    .nav a,
+    .btn {
       min-height: 40px;
       display: inline-flex;
       align-items: center;
@@ -92,46 +90,50 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 10px 14px;
-      font-weight: 800;
-      color: var(--text);
+      font-weight: 850;
       background: rgba(255,255,255,.06);
     }
 
     .btn.primary {
       background: var(--green);
       color: #04140b;
-      border-color: rgba(56,217,130,.8);
+      border-color: rgba(56,217,130,.85);
       box-shadow: 0 10px 30px rgba(56,217,130,.22);
     }
 
-    .btn.buy {
-      background: var(--gold);
-      color: #251800;
-      border-color: rgba(255,212,71,.85);
-      box-shadow: 0 10px 30px rgba(255,212,71,.2);
-    }
-
     .hero {
-      min-height: calc(100vh - 69px);
+      min-height: 82vh;
       display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr);
+      grid-template-columns: minmax(0, .95fr) minmax(320px, 1.05fr);
       gap: clamp(24px, 5vw, 72px);
       align-items: center;
-      padding: clamp(28px, 5vw, 74px) clamp(16px, 5vw, 72px) 42px;
+      padding: clamp(32px, 6vw, 82px) clamp(16px, 5vw, 72px) 42px;
     }
 
-    .hero h1 {
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      color: var(--gold);
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+
+    h1 {
       margin: 0;
-      font-size: clamp(42px, 7vw, 92px);
-      line-height: .96;
+      max-width: 820px;
+      font-size: clamp(44px, 7vw, 90px);
+      line-height: .98;
       letter-spacing: 0;
     }
 
     .lead {
       margin: 22px 0 0;
-      max-width: 780px;
+      max-width: 760px;
       color: var(--muted);
-      font-size: clamp(18px, 2.2vw, 24px);
+      font-size: clamp(18px, 2.1vw, 24px);
       line-height: 1.45;
     }
 
@@ -142,9 +144,7 @@
       margin-top: 30px;
     }
 
-    .coin-stage {
-      position: relative;
-      min-height: 470px;
+    .hero-art-wrap {
       border: 1px solid var(--line);
       border-radius: 8px;
       overflow: hidden;
@@ -154,97 +154,127 @@
 
     .hero-art {
       width: 100%;
-      height: 100%;
       min-height: 470px;
       display: block;
       object-fit: cover;
       object-position: center;
     }
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      padding: 0 clamp(16px, 5vw, 72px) 48px;
-    }
-
-    .stat, .section {
-      background: rgba(14,27,33,.72);
+    .section {
+      margin: 0 clamp(16px, 5vw, 72px) 34px;
+      padding: clamp(20px, 4vw, 38px);
       border: 1px solid var(--line);
       border-radius: 8px;
+      background: rgba(14,27,33,.72);
       box-shadow: var(--shadow);
-    }
-
-    .stat {
-      padding: 18px;
-      min-height: 112px;
-    }
-
-    .stat b {
-      display: block;
-      font-size: 28px;
-      color: var(--gold);
-      margin-bottom: 6px;
-    }
-
-    .stat span { color: var(--muted); font-weight: 700; }
-
-    .section {
-      margin: 0 clamp(16px, 5vw, 72px) 32px;
-      padding: clamp(20px, 4vw, 38px);
     }
 
     .section h2 {
       margin: 0 0 18px;
       font-size: clamp(28px, 4vw, 46px);
+      letter-spacing: 0;
     }
 
-    .grid {
+    .games {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 14px;
     }
 
-    .item {
+    .game-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 420px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(255,255,255,.045);
+    }
+
+    .game-card img {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      background: #050809;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .game-card-body {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      padding: 18px;
+    }
+
+    .game-card h3 {
+      margin: 0 0 8px;
+      font-size: 24px;
+    }
+
+    .game-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .tag-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 14px 0 0;
+    }
+
+    .tag {
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      padding: 5px 8px;
+      color: #d6e8e5;
+      background: rgba(255,255,255,.05);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .game-card .actions { margin-top: auto; }
+
+    .coming {
+      min-height: 420px;
+      border: 1px dashed rgba(255,255,255,.22);
+      border-radius: 8px;
+      padding: 18px;
+      background: rgba(255,255,255,.025);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .coming h3 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      color: var(--teal);
+    }
+
+    .coming p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .feature {
+      min-height: 130px;
       padding: 18px;
       border: 1px solid var(--line);
       border-radius: 8px;
       background: rgba(255,255,255,.04);
-      min-height: 138px;
     }
 
-    .item h3 { margin: 0 0 8px; }
-    .item p { margin: 0; color: var(--muted); line-height: 1.45; }
-
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 18px;
-    }
-
-    .step {
-      min-height: 160px;
-      padding: 20px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: rgba(255,255,255,.045);
-    }
-
-    .step b {
-      width: 38px;
-      height: 38px;
-      display: grid;
-      place-items: center;
-      border-radius: 50%;
-      background: var(--gold);
-      color: #251800;
-      font-size: 18px;
-      margin-bottom: 14px;
-    }
-
-    .step h3 { margin: 0 0 8px; font-size: 20px; }
-    .step p { margin: 0; color: var(--muted); line-height: 1.45; }
+    .feature h3 { margin: 0 0 8px; }
+    .feature p { margin: 0; color: var(--muted); line-height: 1.45; }
 
     .promo-video {
       width: 100%;
@@ -265,12 +295,16 @@
       flex-wrap: wrap;
     }
 
-    @media (max-width: 860px) {
+    @media (max-width: 980px) {
       .hero { grid-template-columns: 1fr; }
-      .coin-stage, .hero-art { min-height: 330px; }
-      .stats, .grid, .steps { grid-template-columns: 1fr; }
+      .hero-art { min-height: 330px; }
+      .games, .feature-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
       .topbar { align-items: flex-start; flex-direction: column; }
       .nav { justify-content: flex-start; }
+      .game-card, .coming { min-height: auto; }
     }
   </style>
 </head>
@@ -278,122 +312,91 @@
   <header class="topbar">
     <a class="brand" href="./">
       <img class="mark" src="./trench-runner-square.png" alt="">
-      <span>Trench Runner Coin</span>
+      <span>VaultVerse Coins Arcade</span>
     </a>
     <nav class="nav" aria-label="Primary">
-      <a href="#tokenomics">Tokenomics</a>
-      <a href="#game">Game</a>
-      <a class="js-buy-coin" href="https://pump.fun" target="_blank" rel="noopener noreferrer">Buy Coin</a>
-      <a href="./play.html">Play</a>
+      <a href="#games">Games</a>
+      <a href="#about">About</a>
+      <a href="./play.html">Play Trench Runner</a>
     </nav>
   </header>
 
   <main>
     <section class="hero">
       <div>
-        <h1>Trench Runner Coin</h1>
-        <p class="lead">A Pump.fun arcade coin where anyone can try the trench run instantly, while holders can connect a Solana wallet to unlock verified holder mode.</p>
+        <div class="eyebrow">Free Web Arcade</div>
+        <h1>VaultVerse Coins Arcade</h1>
+        <p class="lead">A growing hub for fast, weird, fun browser games. Trench Runner is live now, and this page is ready to grow as new VaultVerse games are added.</p>
         <div class="actions">
-          <a class="btn buy js-buy-coin" href="https://pump.fun" target="_blank" rel="noopener noreferrer">Buy Coin</a>
-          <a class="btn primary" href="./play.html">Play Game</a>
-          <a class="btn" href="#tokenomics">View Tokenomics</a>
+          <a class="btn primary" href="./play.html">Play Trench Runner</a>
+          <a class="btn" href="#games">View Games</a>
         </div>
       </div>
-      <div class="coin-stage">
-        <img class="hero-art" src="./trench-runner-hero.png" alt="Trench Runner launch artwork">
-      </div>
-    </section>
-
-    <section class="stats" id="tokenomics" aria-label="Tokenomics highlights">
-      <div class="stat"><b>100</b><span>planned holder access requirement</span></div>
-      <div class="stat"><b>10%</b><span>rug/snipe penalties burned</span></div>
-      <div class="stat"><b>90%</b><span>rug/snipe penalties to reward vault</span></div>
-      <div class="stat"><b>$1</b><span>planned DEX fund contribution per play</span></div>
-    </section>
-
-    <section class="section">
-      <h2>How To Enter</h2>
-      <div class="steps">
-        <div class="step">
-          <b>1</b>
-          <h3>Buy The Coin</h3>
-          <p>Open the Pump.fun coin page and pick up the launch token.</p>
-        </div>
-        <div class="step">
-          <b>2</b>
-          <h3>Play Instantly</h3>
-          <p>Jump into demo play right away while the trenches are moving.</p>
-        </div>
-        <div class="step">
-          <b>3</b>
-          <h3>Unlock Holder Mode</h3>
-          <p>Connect Phantom or another Solana browser wallet holding at least 100 tokens for verified access.</p>
-        </div>
-      </div>
-      <div class="actions">
-        <a class="btn buy js-buy-coin" href="https://pump.fun" target="_blank" rel="noopener noreferrer">Buy Coin on Pump.fun</a>
-        <a class="btn primary" href="./play.html">Connect & Play</a>
+      <div class="hero-art-wrap">
+        <img class="hero-art" src="./trench-runner-hero.png" alt="Trench Runner arcade artwork">
       </div>
     </section>
 
-    <section class="section">
-      <h2>Using a Pump.fun Wallet?</h2>
-      <p class="lead">You can still play demo instantly. For verified holder mode, send at least 100 tokens from your Pump.fun wallet to Phantom or another Solana browser wallet, then connect that wallet on the game page.</p>
+    <section class="section" id="games">
+      <h2>Games</h2>
+      <div class="games">
+        <article class="game-card">
+          <img src="./trench-runner-hero.png" alt="Trench Runner game art">
+          <div class="game-card-body">
+            <h3>Trench Runner</h3>
+            <p>Run through the trenches, collect coins, grab guns and ammo, avoid honeypots, dodge snipers, and survive the ruggers chasing you down.</p>
+            <div class="tag-row">
+              <span class="tag">Free to play</span>
+              <span class="tag">Mobile controls</span>
+              <span class="tag">Arcade survival</span>
+            </div>
+            <div class="actions">
+              <a class="btn primary" href="./play.html">Play</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="coming">
+          <h3>Next Game Slot</h3>
+          <p>This spot is ready for the next VaultVerse game. Add its image, title, description, and play link when it is built.</p>
+        </article>
+
+        <article class="coming">
+          <h3>Future Game Slot</h3>
+          <p>The hub can keep growing without rebuilding the whole site. Each game gets its own section and a direct play button.</p>
+        </article>
+      </div>
     </section>
 
-    <section class="section" id="game">
-      <h2>The Game</h2>
-      <div class="grid">
-        <div class="item">
-          <h3>Collect</h3>
-          <p>Grab coins, rare mega coins, ammo, guns, and medic bags while your run score climbs.</p>
+    <section class="section" id="about">
+      <h2>Built For Quick Play</h2>
+      <div class="feature-grid">
+        <div class="feature">
+          <h3>No Wallet Required</h3>
+          <p>Games are free to open and play. No token gate, no wallet connect, no extra setup.</p>
         </div>
-        <div class="item">
-          <h3>Survive</h3>
-          <p>Ruggers, snipers, honeypots, fuddlers, and whales all change the run in different ways.</p>
+        <div class="feature">
+          <h3>Works On Phones</h3>
+          <p>Trench Runner includes touch movement and a shoot button so phone players can actually compete.</p>
         </div>
-        <div class="item">
-          <h3>Compete</h3>
-          <p>The planned live version uses a daily leaderboard and a reward vault funded by game events.</p>
+        <div class="feature">
+          <h3>Expandable Hub</h3>
+          <p>VaultVerseCoins.com is now the central arcade page for Trench Runner and every future game.</p>
         </div>
       </div>
     </section>
 
     <section class="section">
-      <h2>Launch Trailer</h2>
+      <h2>Trench Runner Trailer</h2>
       <video class="promo-video" controls playsinline preload="metadata" poster="./trench-runner-hero.png">
         <source src="./trench-runner-launch.mp4" type="video/mp4">
       </video>
     </section>
-
-    <section class="section">
-      <h2>Launch Status</h2>
-      <p class="lead">The game is playable now. Demo mode is open for everyone, and holder mode verifies wallets that hold the launch token. Live token settlement will be enabled after the vault wallets and backend settlement flow are tested.</p>
-      <div class="actions">
-        <a class="btn primary" href="./play.html">Enter The Trench</a>
-      </div>
-    </section>
   </main>
 
   <footer class="footer">
-    <span>Trench Runner Coin</span>
-    <span>Public player build only. Admin controls are not included on this website.</span>
+    <span>VaultVerse Coins Arcade</span>
+    <span>Free games, built to grow one release at a time.</span>
   </footer>
-  <script>
-    (() => {
-      const config = window.TrenchCoinConfig || {};
-      const url = String(config.purchaseUrl || '').trim();
-      const links = document.querySelectorAll('.js-buy-coin');
-      for (const link of links) {
-        if (url) {
-          link.href = url;
-          link.textContent = link.textContent.includes('Pump.fun') ? 'Buy Coin on Pump.fun' : 'Buy Coin';
-        } else {
-          link.href = 'https://pump.fun';
-          link.title = 'Paste the direct Pump.fun coin URL into coin_config.js after launch.';
-        }
-      }
-    })();
-  </script>
 </body>
 </html>

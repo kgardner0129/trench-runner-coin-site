@@ -1,17 +1,18 @@
 # GitHub Upload Instructions
 
-Upload the contents of this folder to a new GitHub repository.
+Upload the contents of this folder to the GitHub repository for VaultVerseCoins.com.
 
-Folder to upload:
+Folder:
 
 ```text
 C:\Users\Kendall Gardner\Documents\Codex\2026-06-25\find\outputs\trench_runner_recovered\public_coin_site
 ```
 
-Required public files:
+## Upload These Files
 
 ```text
 .nojekyll
+CNAME
 index.html
 play.html
 coin_config.js
@@ -24,17 +25,15 @@ profile_part_006.js
 profile_part_007.js
 profile.js
 profile.json
-trench_live_client.js
-trench_dex_fund.js
-trench_wallet_gate.js
 trench_performance.js
-trench_tokenomics.js
-GITHUB_UPLOAD_INSTRUCTIONS.md
+trench-runner-hero.png
+trench-runner-square.png
+trench-runner-launch.mp4
 README.md
-assets/
+GITHUB_UPLOAD_INSTRUCTIONS.md
 ```
 
-Do not upload:
+## Do Not Upload For The Free Arcade Build
 
 ```text
 admin.html
@@ -42,57 +41,30 @@ admin_game.html
 tokenized_game.html
 first_coin_profile.json
 launch/settlement-api/.env
+trench_wallet_gate.js
+trench_dex_fund.js
+trench_live_client.js
+trench_tokenomics.js
 ```
+
+The public game is now free to play. No wallet connect, holder verification, DEX contribution, token charge, or backend settlement API is needed.
 
 ## GitHub Pages
 
-1. Create a new GitHub repo.
-2. Upload every file from this folder.
-3. Go to repo Settings.
-4. Open Pages.
-5. Set Source to `Deploy from a branch`.
-6. Select branch `main` and folder `/root`.
-7. Save.
-8. Wait for GitHub to publish the site URL.
+1. Go to the repository.
+2. Click `Add file`.
+3. Click `Upload files`.
+4. Drag in the files listed above.
+5. Commit with:
 
-Use the custom domain URL as the Pump.fun website URL.
-
-## After Pump.fun Gives You The Mint
-
-Edit `coin_config.js`.
-
-Find:
-
-```js
-mint: "",
+```text
+Convert site to free VaultVerse arcade hub
 ```
 
-Replace the blank value with the Pump.fun/Solana mint address, then upload the updated `coin_config.js` to GitHub.
+6. Wait for the GitHub Pages deployment to finish.
+7. Test:
 
-The player game checks this value when players connect Phantom.
-
-Also paste the direct Pump.fun page URL into:
-
-```js
-purchaseUrl: ""
-```
-
-## After Settlement API Is Deployed
-
-Edit `coin_config.js` again.
-
-Find:
-
-```js
-settlementApiBase: ""
-```
-
-Replace the blank value with the HTTPS URL for the settlement API, then upload the updated `coin_config.js` to GitHub.
-
-To enable real SOL DEX-fund contributions, also set:
-
-```js
-dexFundWallet: ""
-dexContributionUsd: 1
-dexGoalUsd: 299
+```text
+https://vaultversecoins.com/?freehub=1
+https://vaultversecoins.com/play.html?freeplay=1
 ```
