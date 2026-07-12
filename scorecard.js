@@ -23,9 +23,13 @@
     const rows = load(leaderboardKey, []);
     const last = rows[0];
     if(last && Date.now() - last.at < 4000 && last.score === score) return;
-    rows.push({ name: "Player", score, coins: coinsValue(), at: Date.now(), gameTitle });
+    const entry = { name: "Player", score, coins: coinsValue(), at: Date.now(), gameTitle, gameId };
+    rows.push(entry);
     rows.sort((a,b)=>b.score-a.score);
     save(leaderboardKey, rows.slice(0, 25));
+    if(window.VVCBackend && window.VVCBackend.enabled && window.VVCBackend.enabled()){
+      window.VVCBackend.submitScore(entry).catch(error => console.warn("Supabase score submit failed", error));
+    }
   }
 
   function ensureButton(){

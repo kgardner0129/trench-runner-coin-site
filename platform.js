@@ -1,5 +1,6 @@
 (function(){
   const cfg = window.VVC_PLATFORM_CONFIG || { games: [], voting: { options: [] }, brand: {} };
+  const backend = window.VVCBackend;
   const keys = {
     suggestions: "vvc_platform_suggestions_v1",
     votes: "vvc_platform_votes_v1",
@@ -9,6 +10,7 @@
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  const remoteOn = () => !!(backend && backend.enabled && backend.enabled());
   const load = (key, fallback) => {
     try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
     catch (_) { return fallback; }
@@ -27,9 +29,7 @@
   function getAdmin(){
     return load(keys.admin, { featuredGame: cfg.featuredGame, approved: [], rejected: [] });
   }
-
   function setAdmin(admin){ save(keys.admin, admin); }
-
   function getSuggestions(){ return load(keys.suggestions, []); }
   function setSuggestions(items){ save(keys.suggestions, items); }
 
@@ -51,21 +51,47 @@
   }
   function setVotes(votes){ save(keys.votes, votes); }
 
-  function approvedOptions(){
-    const admin = getAdmin();
-    const suggested = (admin.approved || []).map(s => ({
+  async function approvedOptions(){
+    const localAdmin = getAdmin();
+    let remote = [];
+    if(remoteOn()){
+      try { remote = await backend.approvedSuggestions(); }
+      catch (error) { console.warn("Supabase approved suggestions failed", error); }
+    }
+    const local = (localAdmin.approved || []);
+    const suggested = [...remote, ...local].map(s => ({
       id: s.id,
       name: s.coinName,
       xAccount: s.xAccount,
       website: s.website,
       description: s.description
     }));
-    return [...(cfg.voting && cfg.voting.options || []), ...suggested];
+    const all = [...(cfg.voting && cfg.voting.options || []), ...suggested];
+    const seen = new Set();
+    return all.filter(opt => {
+      if(!opt || !opt.id || seen.has(opt.id)) return false;
+      seen.add(opt.id);
+      return true;
+    });
   }
 
   function gameById(id){ return (cfg.games || []).find(g => g.id === id) || (cfg.games || [])[0]; }
-  function featuredGame(){ return gameById(getAdmin().featuredGame || cfg.featuredGame); }
-  function previousGames(){ return (cfg.games || []).filter(g => g.id !== (featuredGame() || {}).id); }
+  async function featuredGame(){
+    let id = getAdmin().featuredGame || cfg.featuredGame;
+    if(remoteOn()){
+      try {
+        const setting = await backend.getSetting("featured_game");
+        if(setting && setting.gameId) id = setting.gameId;
+      } catch (error) {
+        console.warn("Supabase featured game failed", error);
+      }
+    }
+    return gameById(id);
+  }
+  async function previousGames(){
+    const featured = await featuredGame();
+    return (cfg.games || []).filter(g => g.id !== (featured || {}).id);
+  }
 
   function tags(tags){
     return `<div class="tag-row">${(tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}</div>`;
@@ -90,10 +116,10 @@
     `;
   }
 
-  function renderHome(){
+  async function renderHome(){
     const root = $("#homeApp");
     if(!root) return;
-    const game = featuredGame();
+    const game = await featuredGame();
     root.innerHTML = `
       <section class="hero">
         <div>
@@ -118,7 +144,7 @@
       <section class="section" id="previous">
         <h2>Previous Games</h2>
         <div class="games">
-          ${previousGames().map(g => gameCard(g, `<p style="margin-top:12px">${escapeHtml(g.week || "Previous Game")}</p>`)).join("")}
+          ${(await previousGames()).map(g => gameCard(g, `<p style="margin-top:12px">${escapeHtml(g.week || "Previous Game")}</p>`)).join("")}
           <article class="panel">
             <h3>Next Weekly Slot</h3>
             <p>Drop a new game file into the site, add artwork, then select it from the admin dashboard.</p>
@@ -153,7 +179,7 @@
   function renderSuggest(){
     const form = $("#suggestForm");
     if(!form) return;
-    form.addEventListener("submit", e => {
+    form.addEventListener("submit", async e => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(form).entries());
       const item = {
@@ -169,20 +195,36 @@
         showNotice("suggestNotice", "Coin name and description are required.");
         return;
       }
-      const list = getSuggestions();
-      list.unshift(item);
-      setSuggestions(list);
-      form.reset();
-      showNotice("suggestNotice", "Suggestion saved for admin review on this device. For public submissions across all users, connect the backend adapter.");
+      try {
+        if(remoteOn()){
+          await backend.submitSuggestion(item);
+          showNotice("suggestNotice", "Suggestion sent for admin review. Once approved, it can appear in public voting.");
+        } else {
+          const list = getSuggestions();
+          list.unshift(item);
+          setSuggestions(list);
+          showNotice("suggestNotice", "Suggestion saved locally. Add Supabase keys to make submissions public across all visitors.");
+        }
+        form.reset();
+      } catch (error) {
+        showNotice("suggestNotice", `Could not submit suggestion: ${error.message || error}`);
+      }
     });
   }
 
-  function renderVote(){
+  async function renderVote(){
     const root = $("#voteApp");
     if(!root) return;
-    const options = approvedOptions();
-    const votes = getVotes();
-    const total = Object.values(votes.byOption || {}).reduce((a,b)=>a+b,0);
+    const options = await approvedOptions();
+    const weekId = mondayWeekId();
+    let byOption = {};
+    if(remoteOn()){
+      try { byOption = await backend.voteTotals(weekId); }
+      catch (error) { console.warn("Supabase vote totals failed", error); }
+    } else {
+      byOption = getVotes().byOption || {};
+    }
+    const total = Object.values(byOption || {}).reduce((a,b)=>a+b,0);
     if(!options.length){
       root.innerHTML = `<section class="section slim"><h2>Vote For Next Week</h2><p>No approved coin suggestions are ready for voting yet.</p><div class="actions"><a class="btn primary" href="./suggest.html">Suggest a Coin</a></div></section>`;
       return;
@@ -190,10 +232,11 @@
     root.innerHTML = `
       <section class="section slim">
         <h2>Vote For ${escapeHtml((cfg.voting && cfg.voting.weekLabel) || "Next Week")}</h2>
-        <p>Voting resets automatically by week in this lightweight static version.</p>
+        <p>${remoteOn() ? "Live voting is connected. One vote is counted per browser each week." : "Voting is local until Supabase is configured."}</p>
+        <div id="voteNotice" class="notice" hidden></div>
         <div class="list">
           ${options.map(opt => {
-            const count = votes.byOption[opt.id] || 0;
+            const count = byOption[opt.id] || 0;
             const pct = total ? Math.round(count / total * 100) : 0;
             return `<div class="row-card">
               <h3>${escapeHtml(opt.name)}</h3>
@@ -209,25 +252,41 @@
         </div>
       </section>
     `;
-    $$("[data-vote]").forEach(btn => btn.addEventListener("click", () => {
-      const state = getVotes();
-      state.byOption[btn.dataset.vote] = (state.byOption[btn.dataset.vote] || 0) + 1;
-      state.voted = true;
-      setVotes(state);
-      renderVote();
+    $$("[data-vote]").forEach(btn => btn.addEventListener("click", async () => {
+      try {
+        if(remoteOn()){
+          await backend.castVote(weekId, btn.dataset.vote);
+        } else {
+          const state = getVotes();
+          state.byOption[btn.dataset.vote] = (state.byOption[btn.dataset.vote] || 0) + 1;
+          state.voted = true;
+          setVotes(state);
+        }
+        await renderVote();
+      } catch (error) {
+        const duplicate = String(error.message || "").toLowerCase().includes("duplicate");
+        showNotice("voteNotice", duplicate ? "Your vote for this week is already counted from this browser." : `Vote failed: ${error.message || error}`);
+      }
     }));
   }
 
-  function renderAdmin(){
+  async function renderAdmin(){
     const root = $("#adminApp");
     if(!root) return;
-    const suggestions = getSuggestions();
+    let user = null;
+    let adminOk = false;
+    if(remoteOn()){
+      user = await backend.currentUser();
+      adminOk = user ? await backend.isAdmin() : false;
+    }
+    const suggestions = remoteOn() && adminOk ? await safePendingSuggestions() : getSuggestions();
     const admin = getAdmin();
     const pending = suggestions.filter(s => s.status === "pending");
     root.innerHTML = `
       <section class="section">
         <h2>Admin Dashboard</h2>
-        <p>This is a lightweight static admin workflow. Approvals and featured-game changes are stored locally here, then exported for the live site config.</p>
+        <p>${remoteOn() ? "Supabase is connected. Sign in with your approved admin email to approve suggestions and set the featured game." : "Supabase is not configured yet. This dashboard is using local-only fallback data."}</p>
+        ${remoteOn() ? adminLoginBlock(user, adminOk) : ""}
         <div class="grid">
           <div class="panel">
             <h3>Featured Game</h3>
@@ -239,7 +298,7 @@
           </div>
           <div class="panel">
             <h3>Export Config</h3>
-            <p>Use this when you want local admin choices baked into the live site.</p>
+            <p>Local export stays available as a backup, even with Supabase connected.</p>
             <div class="actions"><button class="btn" id="exportAdmin">Generate Export</button></div>
           </div>
         </div>
@@ -247,64 +306,113 @@
       <section class="section">
         <h2>Pending Suggestions</h2>
         <div class="list">
-          ${pending.length ? pending.map(s => suggestionRow(s)).join("") : `<p>No pending suggestions on this device.</p>`}
+          ${pending.length ? pending.map(s => suggestionRow(s)).join("") : `<p>No pending suggestions${remoteOn() && !adminOk ? " visible until admin sign-in is active" : ""}.</p>`}
         </div>
       </section>
       <section class="section">
         <h2>Approved For Voting</h2>
-        <div class="list">${(admin.approved || []).map(s => suggestionRow(s, true)).join("") || `<p>No locally approved suggestions yet.</p>`}</div>
+        <div class="list" id="approvedList">${await approvedRows()}</div>
       </section>
       <section class="section">
         <h2>Export</h2>
         <textarea id="adminExport" style="width:100%;min-height:180px;background:#061014;color:#e8fffb;border:1px solid var(--line);border-radius:8px;padding:12px"></textarea>
       </section>
     `;
-    $("#saveFeatured")?.addEventListener("click", () => {
+    $("#adminSignIn")?.addEventListener("click", async () => {
+      const email = $("#adminEmail")?.value || "";
+      try {
+        await backend.signIn(email);
+        alert("Check your email for the Supabase login link, then come back to this admin page.");
+      } catch (error) {
+        alert(`Sign-in failed: ${error.message || error}`);
+      }
+    });
+    $("#adminSignOut")?.addEventListener("click", async () => {
+      await backend.signOut();
+      location.reload();
+    });
+    $("#saveFeatured")?.addEventListener("click", async () => {
       const next = getAdmin();
       next.featuredGame = $("#featuredSelect").value;
       setAdmin(next);
-      alert("Featured game saved locally. Export config when ready to publish it for everyone.");
+      if(remoteOn()){
+        try { await backend.saveSetting("featured_game", { gameId: next.featuredGame }); }
+        catch (error) { alert(`Could not save to Supabase: ${error.message || error}`); return; }
+      }
+      alert(remoteOn() ? "Featured game saved live." : "Featured game saved locally. Export config when ready to publish it for everyone.");
     });
     $("#exportAdmin")?.addEventListener("click", () => {
       $("#adminExport").value = JSON.stringify({ admin: getAdmin(), suggestions: getSuggestions(), votes: getVotes() }, null, 2);
     });
-    $$("[data-approve]").forEach(btn => btn.addEventListener("click", () => {
-      const list = getSuggestions();
-      const item = list.find(s => s.id === btn.dataset.approve);
-      if(item){
-        item.status = "approved";
-        const next = getAdmin();
-        next.approved = [item, ...(next.approved || []).filter(s => s.id !== item.id)];
-        setAdmin(next);
-        setSuggestions(list);
-        renderAdmin();
+    $$("[data-approve]").forEach(btn => btn.addEventListener("click", async () => {
+      if(remoteOn()){
+        try { await backend.approveSuggestion(btn.dataset.approve); }
+        catch (error) { alert(`Approve failed: ${error.message || error}`); return; }
+      } else {
+        const list = getSuggestions();
+        const item = list.find(s => s.id === btn.dataset.approve);
+        if(item){
+          item.status = "approved";
+          const next = getAdmin();
+          next.approved = [item, ...(next.approved || []).filter(s => s.id !== item.id)];
+          setAdmin(next);
+          setSuggestions(list);
+        }
       }
+      await renderAdmin();
     }));
-    $$("[data-reject]").forEach(btn => btn.addEventListener("click", () => {
-      const list = getSuggestions();
-      const item = list.find(s => s.id === btn.dataset.reject);
-      if(item) item.status = "rejected";
-      setSuggestions(list);
-      renderAdmin();
+    $$("[data-reject]").forEach(btn => btn.addEventListener("click", async () => {
+      if(remoteOn()){
+        try { await backend.rejectSuggestion(btn.dataset.reject); }
+        catch (error) { alert(`Reject failed: ${error.message || error}`); return; }
+      } else {
+        const list = getSuggestions();
+        const item = list.find(s => s.id === btn.dataset.reject);
+        if(item) item.status = "rejected";
+        setSuggestions(list);
+      }
+      await renderAdmin();
     }));
   }
 
-  function suggestionRow(s, approved=false){
+  function adminLoginBlock(user, adminOk){
+    if(user){
+      return `<div class="panel"><h3>Admin Sign In</h3><p>Signed in as ${escapeHtml(user.email || "admin")} ${adminOk ? "(approved admin)" : "(not in vvc_admins yet)"}</p><div class="actions"><button class="btn" id="adminSignOut">Sign Out</button></div></div>`;
+    }
+    return `<div class="panel"><h3>Admin Sign In</h3><p>Enter the email you added to <code>vvc_admins</code>. Supabase will send a magic login link.</p><div class="field"><label for="adminEmail">Admin email</label><input id="adminEmail" type="email" placeholder="you@example.com"></div><div class="actions"><button class="btn primary" id="adminSignIn">Send Login Link</button></div></div>`;
+  }
+
+  async function safePendingSuggestions(){
+    try { return await backend.pendingSuggestions(); }
+    catch (error) { console.warn("Supabase pending suggestions failed", error); return []; }
+  }
+
+  async function approvedRows(){
+    const rows = await approvedOptions();
+    return rows.length ? rows.map(s => `<div class="row-card"><h3>${escapeHtml(s.name)}</h3><p>${escapeHtml(s.description)}</p><p>${escapeHtml(s.xAccount || "")} ${escapeHtml(s.website || "")}</p></div>`).join("") : `<p>No approved suggestions yet.</p>`;
+  }
+
+  function suggestionRow(s){
     return `<div class="row-card">
       <h3>${escapeHtml(s.coinName)}</h3>
       <p>${escapeHtml(s.description)}</p>
       <p>${escapeHtml(s.xAccount || "")} ${escapeHtml(s.website || "")}</p>
-      ${approved ? "" : `<div class="actions"><button class="btn primary" data-approve="${s.id}">Approve</button><button class="btn danger" data-reject="${s.id}">Reject</button></div>`}
+      <div class="actions"><button class="btn primary" data-approve="${s.id}">Approve</button><button class="btn danger" data-reject="${s.id}">Reject</button></div>
     </div>`;
   }
 
   function renderLeaderboards(){
-    document.addEventListener("click", e => {
+    document.addEventListener("click", async e => {
       const btn = e.target.closest("[data-leaderboard]");
       if(!btn) return;
       const id = btn.dataset.leaderboard;
-      const rows = load(`vvc_leaderboard_${id}`, []).slice(0, 10);
-      const text = rows.length ? rows.map((r,i)=>`${i+1}. ${r.name || "Player"} - ${r.score}`).join("\\n") : "No local scores yet.";
+      let rows = [];
+      if(remoteOn()){
+        try { rows = await backend.leaderboard(id, 10); }
+        catch (error) { console.warn("Supabase leaderboard failed", error); }
+      }
+      if(!rows.length) rows = load(`vvc_leaderboard_${id}`, []).slice(0, 10);
+      const text = rows.length ? rows.map((r,i)=>`${i+1}. ${r.name || "Player"} - ${r.score}${r.coins ? ` (${r.coins} coins)` : ""}`).join("\n") : "No scores yet.";
       alert(text);
     });
   }
@@ -324,10 +432,14 @@
     return `https://x.com/${encodeURIComponent(handle)}`;
   }
 
-  renderHome();
-  renderPrevious();
-  renderSuggest();
-  renderVote();
-  renderAdmin();
-  renderLeaderboards();
+  async function init(){
+    await renderHome();
+    renderPrevious();
+    renderSuggest();
+    await renderVote();
+    await renderAdmin();
+    renderLeaderboards();
+  }
+
+  init();
 })();
