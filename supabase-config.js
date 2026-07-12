@@ -1,4 +1,4 @@
 window.VVC_SUPABASE_CONFIG = {
   url: "https://evjlewzxjqzhtjknuype.supabase.co",
-  anonKey: "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE"
+  anonKey: "sb_publishable_MMo1oaFaU9AELMb1U8lGCg_I_UZK70J"
 };
