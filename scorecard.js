@@ -2,6 +2,7 @@
   const gameId = document.body?.dataset?.gameId || location.pathname.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "vaultverse-game";
   const gameTitle = document.body?.dataset?.gameTitle || document.title.replace(/\s*[-|].*$/, "") || "VaultVerse Game";
   const leaderboardKey = `vvc_leaderboard_${gameId}`;
+  const playerNameKey = "vvc_player_name_v1";
 
   function text(id){ return document.getElementById(id)?.textContent?.trim() || ""; }
   function scoreValue(){
@@ -16,6 +17,24 @@
   }
   function load(key, fallback){ try{ const raw=localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }catch(_){ return fallback; } }
   function save(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+  function playerName(){
+    const raw = localStorage.getItem(playerNameKey) || "";
+    return cleanName(raw) || "Player";
+  }
+  function ensurePlayerName(){
+    const saved = cleanName(localStorage.getItem(playerNameKey) || "");
+    if(saved) return saved;
+    const entered = cleanName(prompt("Enter a leaderboard name:", "") || "");
+    return setPlayerName(entered || "Player");
+  }
+  function setPlayerName(value){
+    const cleaned = cleanName(value);
+    if(cleaned) localStorage.setItem(playerNameKey, cleaned);
+    return cleaned || "Player";
+  }
+  function cleanName(value){
+    return String(value || "").replace(/[^\w .@-]/g, "").trim().slice(0, 32);
+  }
 
   function recordScore(){
     const score = scoreValue();
@@ -23,7 +42,7 @@
     const rows = load(leaderboardKey, []);
     const last = rows[0];
     if(last && Date.now() - last.at < 4000 && last.score === score) return;
-    const entry = { name: "Player", score, coins: coinsValue(), at: Date.now(), gameTitle, gameId };
+    const entry = { name: ensurePlayerName(), score, coins: coinsValue(), at: Date.now(), gameTitle, gameId };
     rows.push(entry);
     rows.sort((a,b)=>b.score-a.score);
     save(leaderboardKey, rows.slice(0, 25));
@@ -35,13 +54,25 @@
   function ensureButton(){
     const card = document.getElementById("goCard") || document.getElementById("gameover") || document.body;
     if(!card || document.getElementById("vvcShareScoreBtn")) return;
+    const nameWrap = document.createElement("div");
+    nameWrap.id = "vvcPlayerNameWrap";
+    nameWrap.style.cssText = "margin:10px auto 0;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap";
+    nameWrap.innerHTML = `<label for="vvcPlayerName" style="font-weight:900;color:#e8fffb">Name</label><input id="vvcPlayerName" maxlength="32" placeholder="Player name" value="${escapeAttr(playerName())}" style="width:min(220px,70vw);border:1px solid rgba(138,255,193,.38);border-radius:8px;background:#071216;color:#e8fffb;padding:9px 10px;font-weight:800">`;
+    const input = nameWrap.querySelector("#vvcPlayerName");
+    input.addEventListener("input", () => setPlayerName(input.value));
+    input.addEventListener("change", () => setPlayerName(input.value));
     const btn = document.createElement("button");
     btn.id = "vvcShareScoreBtn";
     btn.type = "button";
     btn.textContent = "Share Score";
     btn.style.cssText = "margin:10px auto 0;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(138,255,193,.45);border-radius:10px;background:#38d982;color:#04140b;padding:10px 14px;font-weight:900;cursor:pointer";
     btn.addEventListener("click", createShareCard);
+    card.appendChild(nameWrap);
     card.appendChild(btn);
+  }
+
+  function escapeAttr(value){
+    return String(value == null ? "" : value).replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch]));
   }
 
   function createShareCard(){
