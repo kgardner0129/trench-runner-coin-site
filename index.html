@@ -8,9 +8,9 @@
   <meta property="og:title" content="VaultVerse Coins Arcade">
   <meta property="og:description" content="A free arcade hub for Trench Runner and upcoming VaultVerse games.">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://vaultversecoins.com/trench-runner-square.png">
+  <meta property="og:image" content="https://vaultversecoins.com/vaultverse-hub.jpg">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://vaultversecoins.com/trench-runner-hero.png">
+  <meta name="twitter:image" content="https://vaultversecoins.com/vaultverse-hub.jpg">
   <meta name="theme-color" content="#071216">
   <style>
     :root {
@@ -66,9 +66,9 @@
     }
 
     .mark {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
+      width: 56px;
+      height: 32px;
+      border-radius: 6px;
       object-fit: cover;
       box-shadow: 0 0 22px rgba(255,212,71,.35);
     }
@@ -154,9 +154,9 @@
 
     .hero-art {
       width: 100%;
-      min-height: 470px;
+      aspect-ratio: 2 / 1;
       display: block;
-      object-fit: cover;
+      object-fit: contain;
       object-position: center;
     }
 
@@ -297,7 +297,6 @@
 
     @media (max-width: 980px) {
       .hero { grid-template-columns: 1fr; }
-      .hero-art { min-height: 330px; }
       .games, .feature-grid { grid-template-columns: 1fr; }
     }
 
@@ -311,7 +310,7 @@
 <body>
   <header class="topbar">
     <a class="brand" href="./">
-      <img class="mark" src="./trench-runner-square.png" alt="">
+      <img class="mark" src="./vaultverse-hub.jpg" alt="">
       <span>VaultVerse Coins Arcade</span>
     </a>
     <nav class="nav" aria-label="Primary">
@@ -333,7 +332,7 @@
         </div>
       </div>
       <div class="hero-art-wrap">
-        <img class="hero-art" src="./trench-runner-hero.png" alt="Trench Runner arcade artwork">
+          <img class="hero-art" src="./vaultverse-hub.jpg" alt="Vault Verse hub artwork">
       </div>
     </section>
 
